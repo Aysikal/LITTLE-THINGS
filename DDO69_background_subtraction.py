@@ -11,11 +11,15 @@ from astropy.visualization.mpl_normalize import ImageNormalize
 
 plt.gray()
 
+# import files----------------------------------------------------------------------------------------------------------------------------------------------------
 
 light_file = fits.open(r"C:/Users\AYSAN\Desktop/project/Galaxy\Data\DDO69\d69_V.fits")
 light = light_file[0].data
 
+starless_file = fits.open(r"C:/Users\AYSAN\Desktop/project/Galaxy\starless fits\background first\starless_DDO69_V_background_subtracted.fit")
+starless = starless_file[0].data
 
+# create background------------------------------------------------------------------------------------------------------------------------------------------------
 sigma_clip = SigmaClip(sigma=3.0)
 bkg_estimator = SExtractorBackground()
 bkg = Background2D(light, (250 , 300) , filter_size=(3, 3),
@@ -33,6 +37,8 @@ for i in range(0,-min_value):
         i = i+1
 i = np.min(Acceptable_i)
 
+#background correction--------------------------------------------------------------------------------------------------------------------------------------------
+
 corrected_light = light - bkg.background + i
 print(i)
 
@@ -42,15 +48,10 @@ cbar = plt.colorbar()
 cbar.set_label('pixel value')
 plt.title("DDO69 background (V) , boxsize = 250x300")
 plt.show()
-
 norm = ImageNormalize(vmin=0., stretch=LogStretch())
-
 image1 = light
 image2 = corrected_light
-
-
 norm = ImageNormalize(vmin=0., stretch=LogStretch())
-
 fig, axs = plt.subplots(1, 2, figsize=(10, 5))
 
 # Display the images
@@ -61,26 +62,30 @@ axs[1].set_title('Background subtracted')
 fig.suptitle('DDO69 V-flter (scale = log)')
 # Remove the space between the two images
 plt.subplots_adjust(wspace=0.08)
-
 # Create an axis for the colorbar on the right side of axs[1].
 divider = make_axes_locatable(axs[1])
 cax = divider.append_axes("right", size="5%", pad=0.1)
-
 # Create a colorbar
 cbar = fig.colorbar(im1, cax=cax)
-
 cbar.set_label('log(pixel value)')
 # Show the plot
 plt.show()
 
-starless_file = fits.open(r"C:/Users\AYSAN\Desktop/project/Galaxy\starless fits\background first\starless_DDO69_V_background_subtracted.fit")
-starless = starless_file[0].data
+#export background corrected:
+
+output_filename = 'DDO69_V_background_subtracted.fits'
+# Create a PrimaryHDU (header/data unit) from your array
+primary_hdu = fits.PrimaryHDU(corrected_light)
+# Create an HDUList and append the PrimaryHDU
+hdul = fits.HDUList([primary_hdu])
+# Write the HDUList to the FITS file
+hdul.writeto(output_filename, overwrite=True)
+
+#starless----------------------------------------------------------------------------------------------------------------------------------------------------------
 
 image3 = starless
 image2 = corrected_light
-
 fig, axs = plt.subplots(1, 2, figsize=(10, 5))
-
 # Display the images
 im3 = axs[1].imshow(image3, origin = "lower" , aspect='auto' , norm = norm)
 im2 = axs[0].imshow(image2, origin = "lower" , aspect='auto' , norm = norm)
@@ -89,28 +94,16 @@ axs[1].set_title('starless image')
 fig.suptitle('DDO69 V-filter (scale = log)')
 # Remove the space between the two images
 plt.subplots_adjust(wspace=0.08)
-
 # Create an axis for the colorbar on the right side of axs[1].
 divider = make_axes_locatable(axs[1])
 cax = divider.append_axes("right", size="5%", pad=0.1)
-
 # Create a colorbar
 cbar = fig.colorbar(im1, cax=cax)
-
 cbar.set_label('log(pixel value)')
 # Show the plot
 plt.show()
 
+#starless magnitude table------------------------------------------------------------------------------------------------------------------------------------------
 
-output_filename = 'DDO69_V_background_subtracted.fits'
-
-# Create a PrimaryHDU (header/data unit) from your array
-primary_hdu = fits.PrimaryHDU(corrected_light)
-
-# Create an HDUList and append the PrimaryHDU
-hdul = fits.HDUList([primary_hdu])
-
-# Write the HDUList to the FITS file
-hdul.writeto(output_filename, overwrite=True)
 
 
