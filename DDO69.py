@@ -8,11 +8,24 @@ from photutils.background import Background2D,SExtractorBackground
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from astropy.visualization import LogStretch
 from astropy.visualization.mpl_normalize import ImageNormalize
-
+from scipy import ndimage
+from scipy.ndimage import gaussian_filter
 plt.gray()
+galaxy_name = 'DDO69'
+filter = "V"
+#entered by hand ------------------------------------------------------------------------------------------------------------------------------------------------
+center_v = [430 , 500]
+center_b = [430 , 504]
+center_u = [380 , 530]
+center = center_v
+box_size = 200
+window_size = (40, 40)
+B_exp = 2400
+U_exp = 1800
+V_exp = 1200
+exp = V_exp
 
 # import files----------------------------------------------------------------------------------------------------------------------------------------------------
-
 light_file = fits.open(r"C:/Users\AYSAN\Desktop/project/Galaxy\Data\DDO69\d69_V.fits")
 light = light_file[0].data
 
@@ -103,7 +116,85 @@ cbar.set_label('log(pixel value)')
 # Show the plot
 plt.show()
 
+
+#center of mass ---------------------------------------------------------------------------------------------------------------------------------------------------
+norm = ImageNormalize(vmin=0., stretch=LogStretch())
+image_center_of_mass = ndimage.center_of_mass(starless)
+#coordinates
+x, y = image_center_of_mass[1], image_center_of_mass[0]
+# Create a figure and axes
+fig, ax = plt.subplots()
+# Display  image
+ax.imshow(starless,norm=norm,origin="lower")
+# Mark the point with a red circle
+circle = plt.Circle((x, y), radius=5, fill=False, color='red')
+ax.add_patch(circle)
+plt.show() 
+
+pixel_scale = 1.134 #(arcsec)
+starless[starless <= 0] = 1
+#starless---------------------------------------------------------------------------------------------------------------------------------------------------------
+norm = ImageNormalize(vmin=0., stretch=LogStretch())
+plt.imshow(starless, norm = norm)
+plt.title("starless %s %s"%(galaxy_name,filter))
+plt.show()
 #starless magnitude table------------------------------------------------------------------------------------------------------------------------------------------
+flux = (starless/(exp*((pixel_scale)**2)))
+magnitude_table = -2.5 * np.log10(flux) + 25
+plt.imshow(magnitude_table, origin = "lower")
+plt.title("magnitude table %s %s"%(galaxy_name,filter))
+plt.colorbar()
+plt.show()
+
+# Slice the array
+galaxy_box = starless[center[1]-box_size : center[1]+box_size , center[0]-box_size : center[0]+box_size]
+plt.imshow(galaxy_box, origin = "lower")
+plt.title("galaxy box %s %s"%(galaxy_name,filter))
+plt.show()
+
+#center of mass ---------------------------------------------------------------------------------------------------------------------------------------------------
+norm = ImageNormalize(vmin=0., stretch=LogStretch())
+image_center_of_mass = ndimage.center_of_mass(galaxy_box)
+#coordinates
+x, y = image_center_of_mass[1], image_center_of_mass[0]
+# Create a figure and axes
+fig, ax = plt.subplots()
+# Display  image
+ax.imshow(galaxy_box,norm=norm,origin="lower")
+plt.title("center of mass %s %s"%(galaxy_name,filter))
+# Mark the point with a red circle
+circle = plt.Circle((x, y), radius=3, fill=False, color='red')
+ax.add_patch(circle)
+plt.show() 
+
+#smoothing (moving average)------------------------------------------------------------------------------------------------------------------------------------------
+flux = (galaxy_box/(exp*((pixel_scale)**2)))
+mag_table = -2.5 * np.log10(flux) + 25
+moving_averages = gaussian_filter(mag_table, sigma = 5, mode='reflect')
+print(moving_averages)
+plt.imshow(moving_averages, origin = "lower")
+plt.title("smoothed galaxy box %s %s"%(galaxy_name,filter))
+plt.colorbar()
+plt.show()
+
+plt.imshow(mag_table, origin = "lower")
+plt.title("magnitude table %s %s"%(galaxy_name,filter))
+plt.colorbar()
+plt.show()
+
+plt.figure()
+plt.imshow(moving_averages, origin='lower', cmap='gray', alpha=1)
+# Draw contour lines at the levels specified
+CS = plt.contour(moving_averages, levels=[26,26.5,27,27.5,28,28.5,29,29.5,30,30.5,31,31.5,32])
+plt.clabel(CS, inline=True, fontsize=7)
+plt.title("contour lines %s %s"%(galaxy_name,filter))
+plt.colorbar(CS)
+# Show the plot
+plt.show()
+
+
+
+
 
 
 
